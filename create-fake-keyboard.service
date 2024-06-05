@@ -5,7 +5,7 @@ Description=Setup fake keyboard
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart=/root/linux-gadget-hid-main/create-hid.py keyboard
+ExecStart=/root/linux-gadget-hid-main/create-hid-keyboard.py
 
 [Install]
 WantedBy=multi-user.target
