@@ -79,7 +79,7 @@ def write_to_dev_kernel_file(dev_file, value, write_mode="w"):
         The mode to open the file in ('w' for write, 'wb' for binary write), by default 'w'.
     """
     dev_file = os.path.join(DEV_KERNEL_PATH, dev_file)
-    with open(dev_file, write_mode, encoding="utf-8") as fd:
+    with open(dev_file, write_mode) as fd:
         fd.write(value)
 
 
