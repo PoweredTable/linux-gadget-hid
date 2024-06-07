@@ -1,11 +1,11 @@
 import logging
 import time
+from re import sub
 
 
 class HIDKeyboard:
     """
     Emulate a keyboard using Human Interface Device (HID) protocol.
-
     """
     SIMPLE_CHARS = {'a': 0x04, 'b': 0x05, 'c': 0x06, 'd': 0x07, 'e': 0x08, 'f': 0x09, 'g': 0x0A,
                     'h': 0x0B, 'i': 0x0C, 'j': 0x0D, 'k': 0x0E, 'l': 0x0F, 'm': 0x10, 'n': 0x11,
@@ -22,6 +22,14 @@ class HIDKeyboard:
                    '#': 0x20, '$': 0x21, '%': 0x22, '^': 0x23, '&': 0x24, '*': 0x25, '(': 0x26,
                    ')': 0x27, '_': 0x2D, '+': 0x2E, '{': 0x2F, '}': 0x30, '|': 0x31, '~': 0x32,
                    ':': 0x33, '"': 0x34, '<': 0x36,  '>': 0x37, '?': 0x38}
+
+    COMMAND_KEYS = {'ENTER': 0x28, 'ESCAPE': 0x29, 'BACKSPACE': 0x2A, 'TAB': 0x2B, 'SPACE': 0x2C, 'CAPS_LOCK': 0x39,
+                    'F1': 0x3A, 'F2': 0x3B, 'F3': 0x3C, 'F4': 0x3D, 'F5': 0x3E, 'F6': 0x3F, 'F7': 0x40, 'F8': 0x41,
+                    'F9': 0x42, 'F10': 0x43, 'F11': 0x44, 'F12': 0x45, 'PRINT': 0x46, 'SCROLL_LOCK': 0x47,
+                    'PAUSE': 0x48, 'INSERT': 0x49, 'HOME': 0x4A, 'PAGE_UP': 0x4B, 'DELETE': 0x4C, 'END': 0x4D,
+                    'PAGE_DOWN': 0x4E, 'RIGHT_ARROW': 0x4F, 'LEFT_ARROW': 0x50, 'DOWN_ARROW': 0x51, 'UP_ARROW': 0x52,
+                    'LEFT_CONTROL': 0xE0, 'LEFT_SHIFT': 0xE1, 'LEFT_ALT': 0xE2, 'LEFT_GUI': 0xE3, 'RIGHT_CONTROL': 0xE4,
+                    'RIGHT_SHIFT': 0xE5, 'RIGHT_ALT': 0xE6, 'RIGHT_GUI': 0xE7}
 
     MODIFIER_KEY = {'LEFT_CONTROL': 0x01, 'LEFT_SHIFT': 0x02, 'LEFT_ALT': 0x04,
                     'LEFT_GUI': 0x08, 'RIGHT_CONTROL': 0x10,
@@ -73,6 +81,36 @@ class HIDKeyboard:
         self._write_report_to_dev(report)
         self._release_all_keys()
         time.sleep(self.typing_delay)
+
+    def send_commands(self, commands: str):
+        commands = commands.strip()
+
+        report = bytearray(8)
+
+        commands = sub('(.*)CONTROL', 'LEFT_CONTROL', commands)
+        commands = sub('(.*)CTRL', 'LEFT_CONTROL', commands)
+        commands = sub('(.*)SHIFT', 'LEFT_SHIFT', commands)
+        commands = sub('(.*)ALT', 'LEFT_ALT', commands)
+        commands = sub('(.*)GUI', 'LEFT_GUI', commands)
+        commands = sub('(.*)WIN', 'LEFT_GUI', commands)
+        commands = sub('(.*)WINDOWS', 'LEFT_GUI', commands)
+
+        word_count = len(commands.split())
+
+        if word_count != 1:
+            logging.warning("unable to send multiple command at a time")
+            return
+
+        if commands in self.COMMAND_KEYS:
+            report[2] = self.COMMAND_KEYS[commands]
+        else:
+            logging.warning("unable to send unlisted command %r", commands)
+            return
+
+        self._write_report_to_dev(report)
+        self._release_all_keys()
+        time.sleep(self.typing_delay)
+
 
     def _release_all_keys(self):
         """Release all keys."""
