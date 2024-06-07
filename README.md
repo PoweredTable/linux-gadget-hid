@@ -3,25 +3,27 @@ Example using linux with a micro-usb as a HID gadget (keyboard)
 
 You will need a device with a microusb host port (e.g. Odroid C1, C2, C4, N2), and recent-enough kernel (>3.19) with support for libcomposite and usb_f_hid. Check that your kernel has support for them (either built-in or as modules):
 
+```bash
+zcat /proc/config.gz | egrep -i "libcomposite|usb_f_hid"
 ```
-$ zcat /proc/config.gz | egrep -i "libcomposite|usb_f_hid"
+You should get an output as shown below:
+```bash
 CONFIG_USB_LIBCOMPOSITE=y
-CONFIG_USB_F_HID=y
+CONFIG_USB_F_HID=y # for me instead of an 'y' its an 'm' and works just fine
 ```
 
-# Dependencies:
+# Dependencies
   - python3
-  - https://github.com/aagallag/hid_gadget_test
 
-# How-to:
-* Edit `create-hid.py` and set `vendor` and `description` to the strings you want
-* Create a keyboard as a HID device:
-```
-$ sudo ./create-hid.py keyboard
+# How-to
+* Edit `create-hid-keyboard.py` and set `VENDOR`, `MANUFACTURER` and `DESCRIPTION` to the strings you want.
+* Create the keyboard HID device:
+```bash
+sudo ./create-hid-keyboard.py
 ```
 Leave this process running (e.g. in the background). You can check on the USB host that the device is recognized as a keyboard when plugging in the USB cable:
-```
-$ dmesg
+```bash
+dmesg
 ...
 [ 6377.913325] usb 3-3: new high-speed USB device number 3 using xhci_hcd
 [ 6378.062977] usb 3-3: New USB device found, idVendor=16c0, idProduct=0488, bcdDevice= 1.00
@@ -32,17 +34,26 @@ $ dmesg
 [ 6378.065886] input: Gadget Odroid Keyboard HID as /devices/pci0000:00/0000:00:14.0/usb3/3-3/3-3:1.0/0003:16C0:0488.0004/input/input33
 [ 6378.129950] hid-generic 0003:16C0:0488.0004: input,hidraw3: USB HID v1.01 Keyboard [Gadget Odroid Keyboard HID] on usb-0000:00:14.0-3/input0
 ```
-* Edit `alt-tab.py` and set the correct paths to `hid_gadget_test` binary and `hid` (should be `/dev/hidg0` if you're running only one instance)
-* Edit `alt-tab.py` to send the key sequences you want. You can see `hid_gadget_test`'s syntax by running it:
-```
-./hid_gadget_test /dev/hidg0 keyboard
-```
-* Run `sudo ./alt-tab.py`
-* Plugging and unplugging the USB cable does not stop the processes!
-* There are two systemd unit files to start this at boot, but need changing to the paths to match your system.
+# Usage
+You can run `hid_keyboard.py` after creating the hid background process and plugging your device into the USB port of the host machine:
 
-# Credits
-* ashren0 - for the `create-hid.py` code which does the heavy lifting to set things up
+```bash
+sudo python3 hid_keyboard.py
+```
+
+You can also import the `HIDKeyboard` class from `hid_keyboard.py` file and implement it as you wish:
+
+```python
+from hid_keyboard import HIDKeyboard
+
+hid = HIDKeyboard()
+
+# sending a whole string
+hid.send_string("A string")
+
+# sending a single character
+hid.send_char("a")
+```
 
 # Troubleshooting
 * make sure the kernel has the necessary modules
